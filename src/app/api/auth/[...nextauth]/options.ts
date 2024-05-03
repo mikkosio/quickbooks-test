@@ -49,7 +49,6 @@ export const options: NextAuthOptions = {
             session.accessToken = token.accessToken;
             session.refreshToken = token.refreshToken;
             session.realmId = cookies().get('realmId')?.value;
-            console.log(session, 'session');
             
             cookies().delete('realmId');
             return session
