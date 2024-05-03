@@ -41,6 +41,9 @@ export const options: NextAuthOptions = {
                 token.userId = profile?.sub;
                 token.accessToken = account.access_token;
                 token.refreshToken = account.refresh_token;
+                token.realmId = cookies().get('realmId')?.value;
+
+                cookies().delete('realmId');
             }
             return token
         },
@@ -48,9 +51,7 @@ export const options: NextAuthOptions = {
             session.userId = token.userId;
             session.accessToken = token.accessToken;
             session.refreshToken = token.refreshToken;
-            session.realmId = cookies().get('realmId')?.value;
-            
-            cookies().delete('realmId');
+            session.realmId = token.realmId;
             return session
         }
     }
