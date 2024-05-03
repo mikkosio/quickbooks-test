@@ -1,4 +1,5 @@
 import type { NextAuthOptions } from 'next-auth';
+import { cookies } from 'next/headers';
 
 export const options: NextAuthOptions = {
     providers: [
@@ -9,11 +10,13 @@ export const options: NextAuthOptions = {
             name: 'QuickBooks',
             type: 'oauth',
             wellKnown: 'https://developer.api.intuit.com/.well-known/openid_sandbox_configuration',
-            authorization: { params: { scope: 'com.intuit.quickbooks.accounting openid profile email phone address' } },
+            authorization: {
+                params: {
+                    scope: 'com.intuit.quickbooks.accounting openid profile email phone address',
+                },
+            },
             userinfo: {
                 async request(context) {
-                    console.log(context, 'context');
-                    
                     if (context?.tokens?.access_token) {
                         return await context.client.userinfo(context?.tokens?.access_token)
                     } else {
@@ -24,27 +27,31 @@ export const options: NextAuthOptions = {
             idToken: true,
             checks: ['pkce', 'state'],
             profile(profile) {
-                console.log(profile, 'profile')
                 return {
                     id: profile.sub,
                     name: profile.givenName + ' ' + profile.familyName,
                     email: profile.email
                 }
-            }
+            },
         }
     ],
     callbacks: {
         async jwt({ token, account, profile }) {
             if (account) {
+                token.userId = profile?.sub;
                 token.accessToken = account.access_token;
                 token.refreshToken = account.refresh_token;
-                token.userId = profile?.sub;
             }
             return token
         },
         async session({ session, token }) {
             session.userId = token.userId;
             session.accessToken = token.accessToken;
+            session.refreshToken = token.refreshToken;
+            session.realmId = cookies().get('realmId')?.value;
+            console.log(session, 'session');
+            
+            cookies().delete('realmId');
             return session
         }
     }
